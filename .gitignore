@@ -1,1 +1,7 @@
 node_modules
+db/.vscode
+db/AppData
+db/Documents
+db/MicrosoftEdgeBackups
+db/Desktop
+.dbeaver
