@@ -6,13 +6,35 @@ const { client,
     createPost,
     getAllPosts,
     updatePost,
-    getPostsByUser,
+    getPostsByUser, // We don't use getPostsByUser in the seed.js
+    // so I would like to understand why it was needed for export?
+    // is it because getUserById uses getPostsByUser in index? 
+    // If so that seems kinda weird considering we're importing/exporting
+    // and how the use of the methods are described for this.
     getUserById
 } = require('./index');
+
+// SEEDING
+// This file is to give us a mock-up of data to build and construct
+// our database, rather than connecting directly to the SQL server
+// and durectly typing in queries by hand. It doesn't say why
+// that would be a bad thing? So my guess would be that it just 
+// takes longer and requires more code than neccessary? 
+// I'd like to understand that better. 
 
 // DROP TABLES
 // this function should call a query which drops all tables from our database
 
+// I believe this function is being used to "cleanse" the server in 
+// a sense and reset the tables to the original data of when
+// we created it. ie. in createInitialUsers Alberts location is set to
+// sidney austraila, but from a previous test on the functionality 
+// of our databaseit would have the update value of Lesterville, KY.
+// this is so we can make sure all of our functions
+// continously work as we build our database. Seeing as we arent supposed
+// to re-edit often the core of our database we use the Seeding method
+// to ensure the first deploy will not need to have modifcations done on the 
+// database. 
 async function dropTables() {
     try {
         console.log("Starting to drop tables...");
@@ -69,8 +91,8 @@ async function createInitialUsers() {
         await createUser({
             username: 'albert',
             password: 'bertie99',
-            name: 'Newname Sogood',
-            location: 'Lesterville, KY'
+            name: 'Al Bert',
+            location: 'Sidney, Australia'
         });
         await createUser({
             username: 'sandra',
@@ -126,18 +148,22 @@ async function rebuildDB() {
         // connect DB to the client
         client.connect();
 
-        await dropTables();
-        await createTables();
-        await createInitialUsers();
-        await createInitialPosts();
+        //The FIRST part of the Sequence: 
+        await dropTables(); // Drop the tables so ALL of the functions can be reran on a clean slate and ensure they work.
+        await createTables(); // create new tables - does it work?
+        await createInitialUsers(); // Great put users in those tables
+        await createInitialPosts(); // Now that we have users, lets give them some posts!
     } catch (error) {
         throw error; //passes error up to func that calls createTables
     }
 }
 
+// THE SECONNNDDD PART OF THE SEQUENCE: (please follow the numbers)
 async function testDB() {
     try {
         console.log("Starting to test database...");
+
+        // 1. Grab your users
 
         // queries are promises, so we can await then
         console.log("Calling getAllUsers");
@@ -146,6 +172,8 @@ async function testDB() {
         // Asks for ALL* of the rows from the users table
         // const { rows } = await client.query(`SELECT * FROM users;`);
 
+
+        // 2. Does your users have any new updates?  if so make them!
         console.log("Calling updateUser on users[0]");
         const updateUserResult = await updateUser(users[0].id, {
             name: "Newname Sogood",
@@ -153,12 +181,12 @@ async function testDB() {
         });
         console.log("Result:", updateUserResult);
 
-
+        // 3. Great, now lets grab all of our posts and check them too!
         console.log("Calling getAllPosts");
         const posts = await getAllPosts();
         console.log("Result:", posts);
 
-
+        // 4. Now that you have them, do they have updates? if so make them!
         console.log("Calling updatePost on posts[0]");
         const updatePostResult = await updatePost(posts[0].id, {
             title: "New Title",
@@ -166,6 +194,7 @@ async function testDB() {
         });
         console.log("Result:", updatePostResult);
 
+        // 5. get the user by the id and lets see those updates!!!
         console.log("Calling getUserById with 1");
         const albert = await getUserById(1);
         console.log("Result:", albert);
@@ -177,10 +206,15 @@ async function testDB() {
     }
 }
 
+// This is why Rebuild is the first part of the sequence, and test db is second
+// First we rebuild our data base with tables and users and posts with
+// in terms of science this would be our constant. And test DB would be our variable
+// making changes to our constant so we can view the outcome analyze
+// and work to a better solution for the test. :D
 rebuildDB() // activate func 
     .then(testDB) // run the promise
     .catch(console.error) // catch errors from the promise
-    .finally(() => client.end()); //close the client!
+    .finally(() => client.end()); // ALWAYS close the client!
 
 
 // Our db/index.js file should provide the utility funtions that the rest of our

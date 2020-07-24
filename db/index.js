@@ -14,12 +14,20 @@ async function createUser({
     name,
     location }) {
     try {
+        // this calls rows array to grab it's user object,
+        // defined by grabbing the values of the keys within the selected table
         const { rows: [user] } = await client.query(`
             INSERT INTO users(username, password, name, location)
             VALUES($1, $2, $3, $4)
             ON CONFLICT (username) DO NOTHING
             RETURNING *;
         `, [username, password, name, location]);
+        // this method prevents string injection 
+        // -- ie. the bad peoples trying to do bad things to our data
+        // and possible user's of our application. 
+
+        // I don't fully understand the mechanics of it, but I understand
+        // it's purpose. 
 
         return user;
     } catch (error) {
@@ -36,6 +44,7 @@ async function updateUser(id, fields = {}) {
     ).join(', ');
 
     // return early if this is called without fields
+    // does fields reference to <fields> element in html?
     if (setString.length === 0) {
         return;
     }
@@ -47,7 +56,9 @@ async function updateUser(id, fields = {}) {
         SET ${ setString}
         WHERE id=${ id}
         RETURNING *;
-        `, Object.values(fields));
+        `, Object.values(fields));// This line I need help with but this 
+        // over all sets the corresponding new strings to be set as the new values
+        // to the specificed user's(called by their id) keys in the selected table. 
 
         return user;
     } catch (error) {
@@ -109,6 +120,8 @@ async function createPost({
     content,
 }) {
     try {
+
+        //refer to notes of createUser
         const { rows: [post] } = await client.query(`
             INSERT INTO posts("authorId", title, content)
             VALUES($1, $2, $3)
@@ -146,12 +159,14 @@ async function updatePost(id, fields = {}) {
     } catch (error) {
         throw error;
     }
+    // refer to updateUser for more detailed notes
 }
 
 // GET ALL POSTS
 
 async function getAllPosts() {
     try {
+        // refer to getAllUsers
         const { rows } = await client.query(`
         SELECT * 
         FROM posts;
@@ -168,6 +183,8 @@ async function getAllPosts() {
 
 async function getPostsByUser(userId) {
     try {
+        // this grabs the all of the row objects(their keys and values)
+        // from the posts table corresponding to the provided userId's
         const { rows } = await client.query(`
         SELECT * 
         FROM posts 
