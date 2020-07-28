@@ -6,12 +6,9 @@ const { client,
     createPost,
     getAllPosts,
     updatePost,
-    getPostsByUser, // We don't use getPostsByUser in the seed.js
-    // so I would like to understand why it was needed for export?
-    // is it because getUserById uses getPostsByUser in index? 
-    // If so that seems kinda weird considering we're importing/exporting
-    // and how the use of the methods are described for this.
-    getUserById
+    getUserById,
+    getAllTags,
+    getPostsByTagName
 } = require('./index');
 
 // SEEDING
@@ -39,7 +36,12 @@ async function dropTables() {
     try {
         console.log("Starting to drop tables...");
 
+        // We drop in this order specifically because
+        // post_tags relies on tags and tags relies on posts and posts relies on users
+        // therefore deleting wouldnt be possible if relevant data was still being pulled from it
         await client.query(`
+        DROP TABLE IF EXISTS post_tags;
+        DROP TABLE IF EXISTS tags;
         DROP TABLE IF EXISTS posts;
         DROP TABLE IF EXISTS users;
         `);
@@ -73,6 +75,15 @@ async function createTables() {
             title varchar(255) NOT NULL,
             content TEXT NOT NULL,
             active BOOLEAN DEFAULT true
+        );
+        CREATE TABLE tags (
+            id SERIAL PRIMARY KEY,
+            name varchar(255) UNIQUE NOT NULL
+        );
+        CREATE TABLE post_tags (
+            "postId" INTEGER REFERENCES posts(id),
+            "tagId" INTEGER REFERENCES tags(id),
+            UNIQUE ("postId", "tagId")
         );
         `);
 
@@ -123,25 +134,54 @@ async function createInitialPosts() {
         await createPost({
             authorId: albert.id,
             title: "First Post",
-            content: "This is my first post. I love this blog!"
+            content: "This is my first post. I love this blog!",
+            tags: ["#happy", "#youcandoanything"]
         });
 
         await createPost({
             authorId: sandra.id,
             title: "Tales of pranking my husband",
-            content: "I decided to use this blog to catalog my legendary pranks. Featuring my husband and friends"
+            content: "I decided to use this blog to catalog my legendary pranks. Featuring my husband and friends",
+            tags: ["#happy", "#worst-day-ever"]
         });
 
         await createPost({
             authorId: glamgal.id,
             title: "The 1st step to Glam Goddess - a blog",
-            content: "Whats the new black? Don't worry, allow me to tell you. Glitter Cat-eye liner, my Queens!"
+            content: "Whats the new black? Don't worry, allow me to tell you. Glitter Cat-eye liner, my Queens!",
+            tags: ["#happy", "#youcandoanything", "#canmandoeverything"]
         });
     } catch (error) {
         console.log("Error creating posts!");
         throw error;
     }
 }
+
+// CREATE INITIAL TAGS
+
+// async function createInitialTags() {
+//     try {
+//         console.log("Starting to create tags...");
+
+//         const [happy, sad, inspo, catman] = await createTags([
+//             '#happy',
+//             '#worst-day-ever',
+//             '#youcandoanything',
+//             "#catmandoeverything"
+//         ]);
+
+//         const [postOne, postTwo, postThree] = await getAllPosts();
+
+//         await addTagsToPost(postOne.id, [happy, inspo]);
+//         await addTagsToPost(postTwo.id, [sad, inspo]);
+//         await addTagsToPost(postThree.id, [catman, inspo]);
+
+//         console.log("Finished Creating Tag's!");
+//     } catch (error) {
+//         console.log("Failed to make first tags");
+//         throw error;
+//     }
+// }
 // REBUILD DATABASE
 async function rebuildDB() {
     try {
@@ -153,6 +193,7 @@ async function rebuildDB() {
         await createTables(); // create new tables - does it work?
         await createInitialUsers(); // Great put users in those tables
         await createInitialPosts(); // Now that we have users, lets give them some posts!
+        // await createInitialTags(); // Lets add tags to our posts!
     } catch (error) {
         throw error; //passes error up to func that calls createTables
     }
@@ -194,10 +235,25 @@ async function testDB() {
         });
         console.log("Result:", updatePostResult);
 
+        console.log("Calling updatePost on posts[1], only updating tags");
+        const updatePostTagsResult = await updatePost(posts[0].id, {
+            tags: ["#youcandoanything", "#redfish", "#bluefish"]
+        });
+        console.log("Result:", updatePostTagsResult);
+
         // 5. get the user by the id and lets see those updates!!!
         console.log("Calling getUserById with 1");
         const albert = await getUserById(1);
         console.log("Result:", albert);
+
+        console.log("Calling getAllTags");
+        const allTags = await getAllTags();
+        console.log("Result:", allTags);
+
+        console.log("Calling getPostsByTagName with #happy");
+        const postsWithHappy = await getPostsByTagName("#happy");
+        console.log("Result:", postsWithHappy);
+
 
         console.log("Finished database tests!");
     } catch (error) {
@@ -210,7 +266,7 @@ async function testDB() {
 // First we rebuild our data base with tables and users and posts with
 // in terms of science this would be our constant. And test DB would be our variable
 // making changes to our constant so we can view the outcome analyze
-// and work to a better solution for the test. :D
+// and work to a better solution :D
 rebuildDB() // activate func 
     .then(testDB) // run the promise
     .catch(console.error) // catch errors from the promise
