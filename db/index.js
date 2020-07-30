@@ -331,6 +331,8 @@ async function createPostTag(postId, tagId) {
         VALUES ($1, $2)
         ON CONFLICT ("postId", "tagId") DO NOTHING;
         `, [postId, tagId]);
+
+        console.log([tagId]);
     } catch (error) {
         console.log("Failed to create post tag in index");
         throw error;
