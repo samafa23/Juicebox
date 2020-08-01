@@ -66,7 +66,7 @@ async function createTables() {
             username varchar(255) UNIQUE NOT NULL,
             password varchar(255) NOT NULL,
             name varchar(255) NOT NULL,
-            location varchar(255),
+            location varchar(255) NOT NULL,
             active BOOLEAN DEFAULT true
         );
         CREATE TABLE posts (

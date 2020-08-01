@@ -6,3 +6,4 @@ db/MicrosoftEdgeBackups
 db/Desktop
 .dbeaver
 .project
+.env
