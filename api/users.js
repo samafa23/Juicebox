@@ -19,9 +19,11 @@ usersRouter.get('/', async (req, res) => { // GET request -- something special a
 });
 
 usersRouter.post('/login', async (req, res, next) => {
-    const { username, password } = req.body;
+    const { username, password } = req.body; //grab the username
+    // && password from req.body -- ie what the user is
+    // submitting!
 
-    if (!username || !password) {
+    if (!username || !password) { //if either is not supplied - FAIL
         next({
             name: "MissingCredentialsError",
             message: "Please supply both a username and password"
@@ -30,13 +32,15 @@ usersRouter.post('/login', async (req, res, next) => {
 
     try {
         const user = await getUserByUsername(username);
+        //get the userby the username
         if (user && user.password == password) {
-            const id = user.id;
+            // if user and user password == correct info for user
+            const id = user.id; // grab the id and username
             const theUser = user.username;
-            const token = jwt.sign({ id, theUser }, process.env.JWT_SECRET);
-            res.send({ message: "You're logged in!", token });
+            const token = jwt.sign({ id, theUser }, process.env.JWT_SECRET); // grab the users secret token
+            res.send({ message: "You're logged in!", token }); // let them know their gucci
         } else {
-            next({
+            next({ // But did you double-check your spelling user?
                 name: 'IncorrectCredtialsError',
                 message: 'Username or password is incorrect'
             });
@@ -49,17 +53,20 @@ usersRouter.post('/login', async (req, res, next) => {
 
 usersRouter.post('/register', async (req, res, next) => {
     const { username, password, name, location } = req.body;
-
+    // grab the  username, password, name and location the user
+    // is submitting in their request
     try {
         const _user = await getUserByUsername(username);
+        // a way to check it against our database
 
-        if (_user) {
+        if (_user) { // if it already exists - FAIL
             next({
                 name: 'UserExistsError',
                 message: 'A user by that username already exists!'
             });
         }
 
+        // if not used already complete these:
         const user = await createUser({
             username,
             password,
@@ -75,12 +82,12 @@ usersRouter.post('/register', async (req, res, next) => {
             username
         }, process.env.JWT_SECRET, {
             expiresIn: '1w'
-        });
+        }); // SIGN-ER UP FOR A SECRET TOKEEEN
 
         res.send({
             message: "Thank You for signing up",
             token
-        });
+        }); // Thank you! Heres your special token!
     } catch ({ name, message }) {
         next({ name, message })
     }

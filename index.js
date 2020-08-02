@@ -1,7 +1,7 @@
 
 require('dotenv').config();
 
-const PORT = 3000; // port variable 
+const { PORT = 3000 } = process.env; // port variable  - updated so that it defaults to 3000 if not a heroku provided port!
 const express = require('express'); // import express package and sub-packages
 const server = express(); //activate express && name it server
 const apiRouter = require('./api'); // the router itself is NOT a node package, 
