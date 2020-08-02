@@ -33,6 +33,6 @@ server.use('/api', apiRouter); // All requests concerning our api will
 const { client } = require('./db'); // import our client from our database folder
 client.connect(); // Connect it up!
 
-server.listen(PORT, "localhost", () => { // listen at Port 3000 and return our server
+server.listen(port, "localhost", () => { // listen at Port 3000 and return our server
     console.log('The server is up on Port:', PORT);
 });
